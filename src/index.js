@@ -69,6 +69,11 @@ class Config {
   read(location, parser) {
     if ( location ) {
 
+      // Relative Path: relative to process cwd
+      if ( Config._isRelativePath(location) ) {
+        location = path.normalize(process.cwd() + '/' + location);
+      }
+
       // Check for file existence
       if ( !fs.existsSync(location) ) {
         throw new Error('Config file at ' + location + ' does not exist');
