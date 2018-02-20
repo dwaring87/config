@@ -69,6 +69,11 @@ class Config {
   read(location, parser) {
     if ( location ) {
 
+      // Check for file existence
+      if ( !fs.existsSync(location) ) {
+        throw new Error('Config file at ' + location + ' does not exist');
+      }
+
       // Read new config file
       let add = JSON.parse(fs.readFileSync(location, 'utf8'));
 
