@@ -19,6 +19,9 @@ properties that can be overridden by adding additional config files.  When
 the `reset()` function is used, the configuration will be reset to include
 the default configuration properties, if a default config file is given.
 
+Optionally, the constructor can take a parser function to parse the default
+configuration after it is read (see **Read Configuration File** below).
+
 ```javascript
 let config = new Config('/path/to/default.json');
 ```

@@ -16,14 +16,15 @@ class Config {
   /**
    * Setup a new Configuration
    * @param {string} [defaultConfig] Absolute Path to default configuration file
+   * @param {function} [parser] A function to parse the configuration properties after reading
    */
-  constructor(defaultConfig) {
+  constructor(defaultConfig, parser) {
     this._config = {};
     this._defaultConfig = defaultConfig;
 
     // Read the Default Config File, if provided
     if ( this._defaultConfig ) {
-      this.read(this._defaultConfig);
+      this.read(this._defaultConfig, parser);
     }
   }
 
