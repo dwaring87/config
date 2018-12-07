@@ -124,7 +124,11 @@ class Config {
         if ( Array.isArray(value) ) {
           let parsed = [];
           for ( let i = 0; i < value.length; i++ ) {
-            parsed.push(Config._parseConfig(value[i], directory));
+            let p = value[i];
+            if ( typeof p === 'object' ) {
+              p = Config._parseConfig(p, directory);
+            }
+            parsed.push(p);
           }
           rtn[property] = parsed;
         }
