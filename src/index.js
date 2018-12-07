@@ -17,10 +17,12 @@ class Config {
    * Setup a new Configuration
    * @param {string} [defaultConfig] Absolute Path to default configuration file
    * @param {function} [parser] A function to parse the configuration properties after reading
+   * @param {boolean} [replaceArrays] Set to true to replace arrays with new values
    */
-  constructor(defaultConfig, parser) {
+  constructor(defaultConfig, parser, replaceArrays) {
     this._config = {};
     this._defaultConfig = defaultConfig;
+    this._replaceArrays = replaceArrays;
 
     // Read the Default Config File, if provided
     if ( this._defaultConfig ) {
@@ -90,11 +92,19 @@ class Config {
         add = parser(add);
       }
 
+      // Set Array Merge Function
+      let arrayMergeFunction = function (d, s) {
+        return d.concat(s);
+      }
+      if ( this._replaceArrays ) {
+        arrayMergeFunction = function(d, s) {
+          return s;
+        }
+      }
+
       // Merge configs
       this._config = merge(this._config, add, {
-        arrayMerge: function (d, s) {
-          return d.concat(s);
-        }
+        arrayMerge: arrayMergeFunction
       });
 
     }
