@@ -138,7 +138,7 @@ class Config {
 
     // Set Array Merge Function
     let arrayMergeFunction = function (d, s) {
-      return d.concat(s);
+      return ( d !== undefined && s !== undefined ) ? d.concat(s) : s;
     };
     if ( this._replaceArrays ) {
       arrayMergeFunction = function(d, s) {
@@ -148,7 +148,7 @@ class Config {
 
     // Merge configs
     this._config = deepmerge(this._config, add, {
-      arrayMerge: arrayMergeFunction()
+      arrayMerge: arrayMergeFunction
     });
 
   }
