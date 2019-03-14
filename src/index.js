@@ -3,7 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const merge = require('deepmerge');
+const deepmerge = require('deepmerge');
 
 
 /**
@@ -15,17 +15,36 @@ class Config {
 
   /**
    * Setup a new Configuration
-   * @param {string} [defaultConfig] Absolute Path to default configuration file
+   * @param {string|Object} [defaultConfig] Absolute Path to default configuration file OR
+   * the default configuration object
    * @param {function} [parser] A function to parse the configuration properties after reading
    */
   constructor(defaultConfig, parser) {
-    this._config = {};
-    this._defaultConfig = defaultConfig;
 
-    // Read the Default Config File, if provided
-    if ( this._defaultConfig ) {
-      this.read(this._defaultConfig, parser);
+    // defaultConfig is configuration object
+    if ( typeof defaultConfig === 'object' && defaultConfig !== null ) {
+      this._config = defaultConfig;
+      this._defaultConfig = defaultConfig;
+      this._defaultConfigPath = undefined;
     }
+
+    // defaultConfig is path to configuration file
+    else if ( typeof defaultConfig === 'string' ) {
+      this._config = {};
+      this._defaultConfig = {};
+      this._defaultConfigPath = defaultConfig;
+
+      // Read the Default Config File, if provided
+      if ( this._defaultConfigPath ) {
+        this.read(this._defaultConfigPath, parser);
+      }
+    }
+
+    // defaultConfig type unknown
+    else {
+      throw new TypeError("Cannot create Config class.  defaultConfig should be a configuration object or a path to JSON file.");
+    }
+
   }
 
 
@@ -50,7 +69,12 @@ class Config {
    */
   reset() {
     this.clear();
-    this.read(this._defaultConfig);
+    if ( this._defaultConfigPath !== undefined ) {
+      this.read(this._defaultConfigPath);
+    }
+    else {
+      this._config = this._defaultConfig;
+    }
   }
 
   /**
@@ -82,22 +106,42 @@ class Config {
       // Read new config file
       let add = JSON.parse(fs.readFileSync(location, 'utf8'));
 
-      // Parse relative paths relative to file location
-      add = Config._parseConfig(add, path.dirname(location));
-
-      // Parse the new config, if parser is provided
-      if ( parser ) {
-        add = parser(add);
-      }
-
-      // Merge configs
-      this._config = merge(this._config, add, {
-        arrayMerge: function (d, s) {
-          return d.concat(s);
-        }
-      });
+      // Merge the new config file to the existing config
+      this.merge(add, parser, location);
 
     }
+  }
+
+
+  /**
+   * Merge the additional configuration object into the existing configuration
+   * @param {Object} add The additional configuration
+   * @param {function} [parser] A function to parse the configuration properties after reading
+   * @param {String} [location] Location of relative paths
+   */
+  merge(add, parser, location) {
+
+    // Get directory of location, if provided
+    let dirLocation = "";
+    if ( location !== undefined ) {
+      dirLocation = path.dirname(location);
+    }
+
+    // Parse relative paths relative to file location
+    add = Config._parseConfig(add, dirLocation);
+
+    // Parse the new config, if parser is provided
+    if ( parser ) {
+      add = parser(add);
+    }
+
+    // Merge configs
+    this._config = deepmerge(this._config, add, {
+      arrayMerge: function (d, s) {
+        return d.concat(s);
+      }
+    });
+
   }
 
 
@@ -144,6 +188,7 @@ class Config {
 
     return rtn;
   }
+
 
   /**
    * Parse the configuration value (check for relative paths)
