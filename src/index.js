@@ -18,8 +18,10 @@ class Config {
    * @param {string|Object} [defaultConfig] Absolute Path to default configuration file OR
    * the default configuration object
    * @param {function} [parser] A function to parse the configuration properties after reading
+   * @param {boolean} [replaceArrays] Set to true to replace arrays with new values
    */
-  constructor(defaultConfig, parser) {
+  constructor(defaultConfig, parser, replaceArrays) {
+    this._replaceArrays = replaceArrays;
 
     // defaultConfig is configuration object
     if ( typeof defaultConfig === 'object' && defaultConfig !== null ) {
@@ -112,7 +114,6 @@ class Config {
     }
   }
 
-
   /**
    * Merge the additional configuration object into the existing configuration
    * @param {Object} add The additional configuration
@@ -135,11 +136,19 @@ class Config {
       add = parser(add);
     }
 
+    // Set Array Merge Function
+    let arrayMergeFunction = function (d, s) {
+      return d.concat(s);
+    };
+    if ( this._replaceArrays ) {
+      arrayMergeFunction = function(d, s) {
+        return s;
+      }
+    }
+
     // Merge configs
     this._config = deepmerge(this._config, add, {
-      arrayMerge: function (d, s) {
-        return d.concat(s);
-      }
+      arrayMerge: arrayMergeFunction()
     });
 
   }
@@ -168,7 +177,11 @@ class Config {
         if ( Array.isArray(value) ) {
           let parsed = [];
           for ( let i = 0; i < value.length; i++ ) {
-            parsed.push(Config._parseConfig(value[i], directory));
+            let p = value[i];
+            if ( typeof p === 'object' ) {
+              p = Config._parseConfig(p, directory);
+            }
+            parsed.push(p);
           }
           rtn[property] = parsed;
         }
